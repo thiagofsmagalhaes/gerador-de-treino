@@ -67,6 +67,12 @@
             display: block;
             margin-bottom: 4px;
         }
+        .aviso {
+            font-size: 12px;
+            color: #ffa502;
+            margin-top: 10px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -101,7 +107,7 @@
     <script>
         let baseDeDados = [];
 
-        // Link oficial do seu Google Sheets publicado como CSV
+        // O link oficial da sua planilha
         const urlPlanilha = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTf2ZLprPDoEu65oDyNCG8yJCrfIvjju18tOeYDxnBQlZRnas5gZOnnTDBYqS2oYj8gunvZETvWGJmv/pub?output=csv";
 
         async function carregarPlanilha() {
@@ -110,6 +116,7 @@
                 const dadosCsv = await resposta.text();
                 const linhas = dadosCsv.split('\n');
 
+                baseDeDados = []; 
                 for (let i = 1; i < linhas.length; i++) {
                     const linhaAtual = linhas[i];
                     if (!linhaAtual || linhaAtual.trim() === "") continue;
@@ -124,10 +131,10 @@
                         });
                     }
                 }
-                console.log("Planilha carregada com sucesso do seu link!");
+                console.log("Planilha carregada com sucesso!");
             } catch (erro) {
                 console.error("Erro ao carregar a planilha:", erro);
-                document.getElementById("resultado").innerText = "Erro ao carregar a planilha.";
+                document.getElementById("resultado").innerText = "Erro ao carregar a planilha. Verifique a internet.";
             }
         }
 
@@ -136,43 +143,53 @@
             const difSelecionada = document.getElementById("dificuldade").value;
             const qtd = parseInt(document.getElementById("qtdSequencias").value);
             
-            let sequenciasFiltradas = baseDeDados;
-            
+            // 1. Filtra a base
+            let filtrados = baseDeDados;
             if (modSelecionada !== "Todos") {
-                sequenciasFiltradas = sequenciasFiltradas.filter(item => item.tipo === modSelecionada);
+                filtrados = filtrados.filter(item => item.tipo === modSelecionada);
             }
-            
             if (difSelecionada !== "Todas") {
-                sequenciasFiltradas = sequenciasFiltradas.filter(item => item.dificuldade === difSelecionada);
+                filtrados = filtrados.filter(item => item.dificuldade === difSelecionada);
             }
 
             const divResultado = document.getElementById("resultado");
-
-            if (sequenciasFiltradas.length === 0) {
-                divResultado.innerText = "Nenhuma sequência encontrada para esses filtros. Tente adicionar mais itens na planilha.";
+            
+            if (filtrados.length === 0) {
+                divResultado.innerText = "Nenhuma sequência encontrada. Tente adicionar mais itens na planilha ou mude os filtros.";
                 return;
             }
 
+            // 2. Embaralha a lista para evitar repetições
+            const embaralhados = filtrados.sort(() => Math.random() - 0.5);
+
+            // 3. Define quantos itens exibir (o que for menor: a quantidade pedida ou o total disponível)
+            const totalParaExibir = Math.min(qtd, embaralhados.length);
+            
             divResultado.innerHTML = "";
             
-            for (let i = 0; i < qtd; i++) {
-                const indiceSorteado = Math.floor(Math.random() * sequenciasFiltradas.length);
-                const seqSorteada = sequenciasFiltradas[indiceSorteado];
-                
+            for (let i = 0; i < totalParaExibir; i++) {
+                const item = embaralhados[i];
                 const divItem = document.createElement("div");
                 divItem.className = "item-sequencia";
                 
                 let tag = "";
                 if (modSelecionada === "Todos") {
-                    tag = `<span class="tag-modalidade">${seqSorteada.tipo} - ${seqSorteada.dificuldade}</span>`;
+                    tag = `<span class="tag-modalidade">${item.tipo} - ${item.dificuldade}</span>`;
                 }
 
-                divItem.innerHTML = `${tag}${i + 1}. ${seqSorteada.sequencia}`;
+                divItem.innerHTML = `${tag}${i + 1}. ${item.sequencia}`;
                 divResultado.appendChild(divItem);
+            }
+
+            // Aviso caso a pessoa peça mais do que existe na base
+            if (qtd > embaralhados.length) {
+                const aviso = document.createElement("p");
+                aviso.className = "aviso";
+                aviso.innerText = `* Foram encontradas apenas ${embaralhados.length} sequências diferentes com esses filtros.`;
+                divResultado.appendChild(aviso);
             }
         }
 
-        // Executa assim que a página é aberta
         carregarPlanilha();
     </script>
 
