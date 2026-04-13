@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Sequências de Luta</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1e1e24;
+            color: #ffffff;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background-color: #2b2b36;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+        }
+        h1 { font-size: 24px; color: #ff4757; margin-bottom: 20px; }
+        label { display: block; margin-top: 15px; font-weight: bold; text-align: left; }
+        
+        select, input, button {
+            width: 100%;
+            padding: 15px;
+            margin-top: 8px;
+            font-size: 18px;
+            border-radius: 8px;
+            border: none;
+            box-sizing: border-box;
+        }
+        select, input { background-color: #f1f2f6; color: #2f3542; }
+        
+        button {
+            background-color: #ff4757;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 25px;
+            transition: background 0.2s;
+        }
+        button:active { background-color: #ff6b81; }
+        
+        #resultado {
+            margin-top: 30px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #2ed573;
+            min-height: 80px;
+            line-height: 1.6;
+            text-align: left;
+        }
+        .item-sequencia {
+            background-color: #3b3b4a;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #ff4757;
+        }
+        .tag-modalidade {
+            font-size: 12px;
+            color: #a4b0be;
+            display: block;
+            margin-bottom: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🥊 Gerador de Treino</h1>
+        
+        <label for="modalidade">Modalidade:</label>
+        <select id="modalidade">
+            <option value="Todos">Todas as Modalidades</option>
+            <option value="Boxe">Boxe</option>
+            <option value="Muay Thai">Muay Thai</option>
+            <option value="Kickboxing">Kickboxing</option>
+        </select>
+
+        <label for="dificuldade">Dificuldade:</label>
+        <select id="dificuldade">
+            <option value="Todas">Todas as Dificuldades</option>
+            <option value="Fácil">Fácil</option>
+            <option value="Médio">Médio</option>
+            <option value="Difícil">Difícil</option>
+        </select>
+
+        <label for="qtdSequencias">Quantidade de Sequências:</label>
+        <input type="number" id="qtdSequencias" value="3" min="1" max="20">
+
+        <button onclick="sortearSequencia()">Gerar Treino</button>
+
+        <div id="resultado">Seu treino aparecerá aqui!</div>
+    </div>
+
+    <script>
+        let baseDeDados = [];
+
+        // Link oficial do seu Google Sheets publicado como CSV
+        const urlPlanilha = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTf2ZLprPDoEu65oDyNCG8yJCrfIvjju18tOeYDxnBQlZRnas5gZOnnTDBYqS2oYj8gunvZETvWGJmv/pub?output=csv";
+
+        async function carregarPlanilha() {
+            try {
+                const resposta = await fetch(urlPlanilha);
+                const dadosCsv = await resposta.text();
+                const linhas = dadosCsv.split('\n');
+
+                for (let i = 1; i < linhas.length; i++) {
+                    const linhaAtual = linhas[i];
+                    if (!linhaAtual || linhaAtual.trim() === "") continue;
+
+                    const colunas = linhaAtual.split(',');
+
+                    if (colunas.length >= 3) {
+                        baseDeDados.push({
+                            tipo: colunas[0].trim(),
+                            dificuldade: colunas[1].trim(),
+                            sequencia: colunas[2].trim()
+                        });
+                    }
+                }
+                console.log("Planilha carregada com sucesso do seu link!");
+            } catch (erro) {
+                console.error("Erro ao carregar a planilha:", erro);
+                document.getElementById("resultado").innerText = "Erro ao carregar a planilha.";
+            }
+        }
+
+        function sortearSequencia() {
+            const modSelecionada = document.getElementById("modalidade").value;
+            const difSelecionada = document.getElementById("dificuldade").value;
+            const qtd = parseInt(document.getElementById("qtdSequencias").value);
+            
+            let sequenciasFiltradas = baseDeDados;
+            
+            if (modSelecionada !== "Todos") {
+                sequenciasFiltradas = sequenciasFiltradas.filter(item => item.tipo === modSelecionada);
+            }
+            
+            if (difSelecionada !== "Todas") {
+                sequenciasFiltradas = sequenciasFiltradas.filter(item => item.dificuldade === difSelecionada);
+            }
+
+            const divResultado = document.getElementById("resultado");
+
+            if (sequenciasFiltradas.length === 0) {
+                divResultado.innerText = "Nenhuma sequência encontrada para esses filtros. Tente adicionar mais itens na planilha.";
+                return;
+            }
+
+            divResultado.innerHTML = "";
+            
+            for (let i = 0; i < qtd; i++) {
+                const indiceSorteado = Math.floor(Math.random() * sequenciasFiltradas.length);
+                const seqSorteada = sequenciasFiltradas[indiceSorteado];
+                
+                const divItem = document.createElement("div");
+                divItem.className = "item-sequencia";
+                
+                let tag = "";
+                if (modSelecionada === "Todos") {
+                    tag = `<span class="tag-modalidade">${seqSorteada.tipo} - ${seqSorteada.dificuldade}</span>`;
+                }
+
+                divItem.innerHTML = `${tag}${i + 1}. ${seqSorteada.sequencia}`;
+                divResultado.appendChild(divItem);
+            }
+        }
+
+        // Executa assim que a página é aberta
+        carregarPlanilha();
+    </script>
+
+</body>
+</html>
