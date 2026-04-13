@@ -68,10 +68,13 @@
             margin-bottom: 4px;
         }
         .aviso {
-            font-size: 12px;
+            font-size: 13px;
             color: #ffa502;
-            margin-top: 10px;
+            margin-bottom: 15px;
             text-align: center;
+            background: #4a4a0040;
+            padding: 10px;
+            border-radius: 5px;
         }
     </style>
 </head>
@@ -106,8 +109,8 @@
 
     <script>
         let baseDeDados = [];
+        let historicoSorteios = new Set(); // Memória para evitar repetir no mesmo treino
 
-        // O link oficial da sua planilha
         const urlPlanilha = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTf2ZLprPDoEu65oDyNCG8yJCrfIvjju18tOeYDxnBQlZRnas5gZOnnTDBYqS2oYj8gunvZETvWGJmv/pub?output=csv";
 
         async function carregarPlanilha() {
@@ -131,11 +134,21 @@
                         });
                     }
                 }
-                console.log("Planilha carregada com sucesso!");
             } catch (erro) {
-                console.error("Erro ao carregar a planilha:", erro);
                 document.getElementById("resultado").innerText = "Erro ao carregar a planilha. Verifique a internet.";
             }
+        }
+
+        // Algoritmo Fisher-Yates (Embaralhamento real e à prova de falhas)
+        function embaralhar(array) {
+            let m = array.length, t, i;
+            while (m) {
+                i = Math.floor(Math.random() * m--);
+                t = array[m];
+                array[m] = array[i];
+                array[i] = t;
+            }
+            return array;
         }
 
         function sortearSequencia() {
@@ -143,7 +156,10 @@
             const difSelecionada = document.getElementById("dificuldade").value;
             const qtd = parseInt(document.getElementById("qtdSequencias").value);
             
-            // 1. Filtra a base
+            const divResultado = document.getElementById("resultado");
+            divResultado.innerHTML = "";
+            
+            // 1. Filtra a base original de acordo com os selects
             let filtrados = baseDeDados;
             if (modSelecionada !== "Todos") {
                 filtrados = filtrados.filter(item => item.tipo === modSelecionada);
@@ -152,23 +168,48 @@
                 filtrados = filtrados.filter(item => item.dificuldade === difSelecionada);
             }
 
-            const divResultado = document.getElementById("resultado");
-            
-            if (filtrados.length === 0) {
-                divResultado.innerText = "Nenhuma sequência encontrada. Tente adicionar mais itens na planilha ou mude os filtros.";
+            // 2. Remove duplicatas exatas que possam ter sido cadastradas na planilha
+            let listaUnica = [];
+            let controleUnico = new Set();
+            for (let item of filtrados) {
+                if (!controleUnico.has(item.sequencia)) {
+                    controleUnico.add(item.sequencia);
+                    listaUnica.push(item);
+                }
+            }
+
+            if (listaUnica.length === 0) {
+                divResultado.innerText = "Nenhuma sequência encontrada na planilha com esses filtros.";
                 return;
             }
 
-            // 2. Embaralha a lista para evitar repetições
-            const embaralhados = filtrados.sort(() => Math.random() - 0.5);
+            // 3. Verifica o que ainda NÃO foi sorteado neste treino
+            let opcoesIneditas = listaUnica.filter(item => !historicoSorteios.has(item.sequencia));
 
-            // 3. Define quantos itens exibir (o que for menor: a quantidade pedida ou o total disponível)
-            const totalParaExibir = Math.min(qtd, embaralhados.length);
+            // Se as opções inéditas não forem suficientes para preencher o que o usuário pediu
+            if (opcoesIneditas.length < qtd) {
+                historicoSorteios.clear(); // Zera a memória
+                opcoesIneditas = listaUnica; // Recomeça usando todas as opções únicas do filtro
+                
+                const aviso = document.createElement("div");
+                aviso.className = "aviso";
+                aviso.innerHTML = "🔄 <b>Lista renovada!</b><br>Você já treinou todas as sequências diferentes desse filtro. O histórico foi zerado e os golpes recomeçaram.";
+                divResultado.appendChild(aviso);
+            }
+
+            // 4. Embaralha de forma segura
+            const embaralhados = embaralhar([...opcoesIneditas]);
+
+            // 5. Separa a quantidade exata para exibir
+            const sequenciasDesteRound = embaralhados.slice(0, qtd);
             
-            divResultado.innerHTML = "";
-            
-            for (let i = 0; i < totalParaExibir; i++) {
-                const item = embaralhados[i];
+            // 6. Exibe na tela e salva na memória
+            for (let i = 0; i < sequenciasDesteRound.length; i++) {
+                const item = sequenciasDesteRound[i];
+                
+                // Adiciona na memória para não sair no próximo round
+                historicoSorteios.add(item.sequencia);
+
                 const divItem = document.createElement("div");
                 divItem.className = "item-sequencia";
                 
@@ -179,14 +220,6 @@
 
                 divItem.innerHTML = `${tag}${i + 1}. ${item.sequencia}`;
                 divResultado.appendChild(divItem);
-            }
-
-            // Aviso caso a pessoa peça mais do que existe na base
-            if (qtd > embaralhados.length) {
-                const aviso = document.createElement("p");
-                aviso.className = "aviso";
-                aviso.innerText = `* Foram encontradas apenas ${embaralhados.length} sequências diferentes com esses filtros.`;
-                divResultado.appendChild(aviso);
             }
         }
 
