@@ -1,0 +1,22 @@
+{
+  "name": "TreinoApp - Sequências de Luta",
+  "short_name": "TreinoApp",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#121214",
+  "theme_color": "#E11D48",
+  "description": "Gerador de sequências de Boxe, Muay Thai e Kickboxing",
+  "icons": [
+    {
+      "src": "luvas.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "luvas.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
