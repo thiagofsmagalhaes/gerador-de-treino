@@ -2,229 +2,508 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador de Sequências de Luta</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TreinoApp</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #1e1e24;
-            color: #ffffff;
-            text-align: center;
-            padding: 20px;
-            margin: 0;
+        :root {
+            --bg-color: #121214;
+            --card-bg: #202024;
+            --primary: #E11D48;
+            --primary-hover: #BE123C;
+            --text-main: #E1E1E6;
+            --text-sec: #A8A8B3;
+            --nav-bg: #18181B;
+            --modal-bg: rgba(0, 0, 0, 0.85);
         }
-        .container {
-            max-width: 400px;
-            margin: 0 auto;
-            background-color: #2b2b36;
-            padding: 25px;
-            border-radius: 15px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
-        }
-        h1 { font-size: 24px; color: #ff4757; margin-bottom: 20px; }
-        label { display: block; margin-top: 15px; font-weight: bold; text-align: left; }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
         
-        select, input, button {
-            width: 100%;
-            padding: 15px;
-            margin-top: 8px;
-            font-size: 18px;
-            border-radius: 8px;
-            border: none;
-            box-sizing: border-box;
+        body { background-color: var(--bg-color); color: var(--text-main); padding-bottom: 80px; }
+
+        /* TELA DE LOADING GLOBAL */
+        #loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--bg-color); z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            transition: opacity 0.5s ease;
         }
-        select, input { background-color: #f1f2f6; color: #2f3542; }
+        .spinner {
+            width: 60px; height: 60px; border: 6px solid #323238;
+            border-top-color: var(--primary); border-radius: 50%;
+            animation: spin 1s linear infinite; margin-bottom: 20px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .header { background-color: var(--card-bg); padding: 20px; text-align: center; border-bottom: 1px solid #323238; }
+        .header h1 { font-size: 1.5rem; color: var(--primary); }
+
+        .tab-content { display: none; padding: 20px; max-width: 500px; margin: 0 auto; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-size: 0.9rem; color: var(--text-sec); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
         
-        button {
-            background-color: #ff4757;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 25px;
-            transition: background 0.2s;
+        select, input[type="text"], input[type="number"] {
+            width: 100%; padding: 14px; border-radius: 8px; border: 1px solid #323238;
+            background-color: #121214; color: var(--text-main); font-size: 1rem; outline: none; transition: border 0.2s;
         }
-        button:active { background-color: #ff6b81; }
+        select:focus, input:focus { border-color: var(--primary); }
+
+        button.btn-main {
+            width: 100%; padding: 15px; background-color: var(--primary); color: white;
+            border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold;
+            cursor: pointer; transition: 0.2s; margin-top: 10px;
+        }
+        button.btn-main:hover { background-color: var(--primary-hover); }
+        button.btn-main:disabled { background-color: #555; cursor: not-allowed; }
+
+        /* Linhas de Golpes Dinâmicas (Dropdown) */
+        .linha-golpe { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
+        .linha-golpe select { flex: 1; }
+        .btn-remover {
+            background-color: #323238; color: var(--text-sec); border: none; 
+            border-radius: 8px; width: 45px; height: 45px; font-size: 1.2rem; 
+            cursor: pointer; transition: 0.2s; font-weight: bold;
+        }
+        .btn-remover:hover { background-color: #555; color: white; }
         
-        #resultado {
-            margin-top: 30px;
-            font-size: 20px;
-            font-weight: bold;
-            color: #2ed573;
-            min-height: 80px;
-            line-height: 1.6;
-            text-align: left;
-        }
+        .botoes-acao { display: flex; gap: 10px; margin-bottom: 20px; }
+        .botoes-acao button { flex: 1; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; border: none; }
+        
+        .btn-add-golpe { background-color: transparent; color: var(--primary); border: 2px dashed #323238 !important; }
+        .btn-add-golpe:hover { border-color: var(--primary) !important; background-color: rgba(225, 29, 72, 0.1); }
+        
+        .btn-novo-banco { background-color: #323238; color: white; font-size: 0.9rem; }
+        .btn-novo-banco:hover { background-color: #444; }
+
+        #resultado { margin-top: 25px; }
         .item-sequencia {
-            background-color: #3b3b4a;
-            padding: 10px;
-            margin-bottom: 10px;
-            border-radius: 8px;
-            border-left: 4px solid #ff4757;
+            background-color: var(--card-bg); padding: 15px; margin-bottom: 12px;
+            border-radius: 8px; border-left: 4px solid var(--primary); font-size: 1.1rem; line-height: 1.5;
         }
-        .tag-modalidade {
-            font-size: 12px;
-            color: #a4b0be;
-            display: block;
-            margin-bottom: 4px;
+        .tag-modalidade { font-size: 0.75rem; color: var(--text-sec); display: block; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
+
+        .search-box { display: flex; border: 1px solid #323238; border-radius: 8px; overflow: hidden; margin-bottom: 15px; }
+        .search-box:focus-within { border-color: var(--primary); }
+        .search-box input { border: none; border-radius: 0; margin: 0; flex: 1; }
+        .search-box button { background: var(--primary); border: none; color: white; padding: 0 15px; font-size: 1.2rem; cursor: pointer; }
+        .filtros-banco { display: flex; gap: 10px; margin-bottom: 20px; }
+        .filtros-banco .form-group { flex: 1; margin-bottom: 0; }
+
+        .bottom-nav {
+            position: fixed; bottom: 0; width: 100%; background-color: var(--nav-bg);
+            display: flex; justify-content: space-around; border-top: 1px solid #323238; padding: 10px 0; z-index: 100;
         }
-        .aviso {
-            font-size: 13px;
-            color: #ffa502;
-            margin-bottom: 15px;
-            text-align: center;
-            background: #4a4a0040;
-            padding: 10px;
-            border-radius: 5px;
+        .nav-item {
+            color: var(--text-sec); text-align: center; font-size: 0.8rem;
+            display: flex; flex-direction: column; align-items: center; cursor: pointer; padding: 5px 15px; transition: color 0.2s; flex: 1;
         }
+        .nav-item.active { color: var(--primary); }
+        .nav-icon { font-size: 1.4rem; margin-bottom: 3px; }
+
+        /* Modal de Novo Golpe */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--modal-bg); z-index: 200; justify-content: center; align-items: center; padding: 20px;
+        }
+        .modal-content { background: var(--card-bg); padding: 25px; border-radius: 12px; width: 100%; max-width: 400px; }
+        .modal h2 { margin-bottom: 15px; color: var(--primary); font-size: 1.3rem; }
+        .checkbox-group { display: flex; justify-content: space-between; margin-bottom: 20px; margin-top: 10px;}
+        .checkbox-item { display: flex; flex-direction: column; align-items: center; font-size: 0.85rem; color: #E1E1E6; gap: 5px;}
+        .checkbox-item input { width: 20px; height: 20px; accent-color: var(--primary); }
+        .btn-fechar { background: transparent; color: var(--text-sec); border: 1px solid #323238; margin-top: 10px; }
+
+        #toast {
+            visibility: hidden; min-width: 250px; background-color: #047857; color: #fff;
+            text-align: center; border-radius: 8px; padding: 16px; position: fixed;
+            z-index: 1000; left: 50%; transform: translateX(-50%); bottom: 90px; font-weight: bold; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
+        #toast.erro { background-color: #e74c3c; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>🥊 Gerador de Treino</h1>
-        
-        <label for="modalidade">Modalidade:</label>
-        <select id="modalidade">
-            <option value="Todos">Todas as Modalidades</option>
-            <option value="Boxe">Boxe</option>
-            <option value="Muay Thai">Muay Thai</option>
-            <option value="Kickboxing">Kickboxing</option>
-        </select>
-
-        <label for="dificuldade">Dificuldade:</label>
-        <select id="dificuldade">
-            <option value="Todas">Todas as Dificuldades</option>
-            <option value="Fácil">Fácil</option>
-            <option value="Médio">Médio</option>
-            <option value="Difícil">Difícil</option>
-        </select>
-
-        <label for="qtdSequencias">Quantidade de Sequências:</label>
-        <input type="number" id="qtdSequencias" value="3" min="1" max="20">
-
-        <button onclick="sortearSequencia()">Gerar Treino</button>
-
-        <div id="resultado">Seu treino aparecerá aqui!</div>
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <h2 style="color: var(--primary); font-size: 1.5rem;">Aquecendo...</h2>
+        <p style="color: var(--text-sec); margin-top: 10px; font-size: 0.9rem;">Buscando dados no tatame virtual</p>
     </div>
 
+    <div class="header">
+        <h1>🥊 TreinoApp</h1>
+    </div>
+
+    <div id="tela-gerador" class="tab-content active">
+        <div class="form-group">
+            <label>Modalidade</label>
+            <select id="filtroMod">
+                <option value="Todos">Todas as Modalidades</option>
+                <option value="Boxe">Boxe</option>
+                <option value="Muay Thai">Muay Thai</option>
+                <option value="Kickboxing">Kickboxing</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Dificuldade</label>
+            <select id="filtroDif">
+                <option value="Todas">Todas as Dificuldades</option>
+                <option value="Fácil">Fácil</option>
+                <option value="Médio">Médio</option>
+                <option value="Difícil">Difícil</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Rounds (Qtd. Sequências)</label>
+            <input type="number" id="qtdSeq" value="4" min="1" max="20">
+        </div>
+        <button class="btn-main" onclick="sortear()">Iniciar Treino</button>
+
+        <div id="resultado"></div>
+    </div>
+
+    <div id="tela-cadastro" class="tab-content">
+        <div class="form-group">
+            <label>Modalidade</label>
+            <select id="novoMod" onchange="atualizarListasSuspensas()">
+                <option value="Boxe">Boxe</option>
+                <option value="Muay Thai" selected>Muay Thai</option>
+                <option value="Kickboxing">Kickboxing</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Dificuldade</label>
+            <select id="novoDif">
+                <option value="Fácil">Fácil</option>
+                <option value="Médio">Médio</option>
+                <option value="Difícil">Difícil</option>
+            </select>
+        </div>
+        
+        <label>Monte a Sequência</label>
+        <div id="container-golpes"></div>
+        
+        <div class="botoes-acao">
+            <button class="btn-add-golpe" onclick="adicionarCaixaGolpe()">+ Inserir Golpe</button>
+            <button class="btn-novo-banco" onclick="abrirModalGolpe()">⭐ Novo Dicionário</button>
+        </div>
+        
+        <button class="btn-main" id="btnSalvar" onclick="salvarSequencia()">Salvar Sequência</button>
+    </div>
+
+    <div id="tela-banco" class="tab-content">
+        <div class="search-box">
+            <input type="text" id="buscaTexto" placeholder="Buscar sequência (ex: Jab)..." onkeyup="if(event.key === 'Enter') renderizarLista()">
+            <button onclick="renderizarLista()" title="Pesquisar">🔍</button>
+        </div>
+
+        <div class="filtros-banco">
+            <div class="form-group">
+                <select id="filtroBancoMod" onchange="renderizarLista()">
+                    <option value="Todos">Mod: Todas</option>
+                    <option value="Boxe">Boxe</option>
+                    <option value="Muay Thai">Muay Thai</option>
+                    <option value="Kickboxing">Kickboxing</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <select id="filtroBancoDif" onchange="renderizarLista()">
+                    <option value="Todas">Dif: Todas</option>
+                    <option value="Fácil">Fácil</option>
+                    <option value="Médio">Médio</option>
+                    <option value="Difícil">Difícil</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="lista-banco"></div>
+    </div>
+
+    <div id="modalGolpe" class="modal">
+        <div class="modal-content">
+            <h2>Cadastrar Novo Golpe</h2>
+            <div class="form-group">
+                <label>Nome do Golpe</label>
+                <input type="text" id="nomeNovoGolpe" placeholder="Ex: Superman Punch">
+            </div>
+            <label>Válido para quais modalidades?</label>
+            <div class="checkbox-group">
+                <label class="checkbox-item"><input type="checkbox" id="checkBoxe" checked> Boxe</label>
+                <label class="checkbox-item"><input type="checkbox" id="checkMT" checked> Muay Thai</label>
+                <label class="checkbox-item"><input type="checkbox" id="checkKB" checked> Kickboxing</label>
+            </div>
+            <button class="btn-main" id="btnSalvarGolpe" onclick="salvarNovoGolpe()">Salvar no Dicionário</button>
+            <button class="btn-main btn-fechar" onclick="fecharModalGolpe()">Cancelar</button>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="mudarTela('tela-gerador', this)">
+            <span class="nav-icon">⚡</span><span>Treinar</span>
+        </div>
+        <div class="nav-item" onclick="mudarTela('tela-cadastro', this)">
+            <span class="nav-icon">➕</span><span>Adicionar</span>
+        </div>
+        <div class="nav-item" onclick="mudarTela('tela-banco', this)">
+            <span class="nav-icon">📋</span><span>Banco</span>
+        </div>
+    </div>
+
+    <div id="toast"></div>
+
     <script>
-        let baseDeDados = [];
-        let historicoSorteios = new Set(); // Memória para evitar repetir no mesmo treino
+        // LINK DA API
+        const URL_API = "https://script.google.com/macros/s/AKfycbzMNVyrvnwPFmkW7HnrfdjSZf3HYeI6IClvQj7yVYzEUzSmatG7KzekjOx2W5TOwL1H5Q/exec";
 
-        const urlPlanilha = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTf2ZLprPDoEu65oDyNCG8yJCrfIvjju18tOeYDxnBQlZRnas5gZOnnTDBYqS2oYj8gunvZETvWGJmv/pub?output=csv";
+        let baseSequencias = [];
+        let dicGolpes = [];
+        let historico = new Set();
+        let maxGolpes = 15;
 
-        async function carregarPlanilha() {
+        function mudarTela(idTela, elemento) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(idTela).classList.add('active');
+            elemento.classList.add('active');
+            if(idTela === 'tela-banco') renderizarLista();
+        }
+
+        // === CARREGAMENTO DA API ===
+        async function carregarDados() {
             try {
-                const resposta = await fetch(urlPlanilha);
-                const dadosCsv = await resposta.text();
-                const linhas = dadosCsv.split('\n');
+                const resposta = await fetch(URL_API);
+                const dadosJson = await resposta.json();
+                
+                baseSequencias = dadosJson.sequencias || [];
+                dicGolpes = dadosJson.golpes || [];
 
-                baseDeDados = []; 
-                for (let i = 1; i < linhas.length; i++) {
-                    const linhaAtual = linhas[i];
-                    if (!linhaAtual || linhaAtual.trim() === "") continue;
-
-                    const colunas = linhaAtual.split(',');
-
-                    if (colunas.length >= 3) {
-                        baseDeDados.push({
-                            tipo: colunas[0].trim(),
-                            dificuldade: colunas[1].trim(),
-                            sequencia: colunas[2].trim()
-                        });
-                    }
-                }
+                // Quando a API responder, a gente constrói a tela
+                renderizarLista();
+                atualizarListasSuspensas();
+                
+                // Remove a tela de carregamento suavemente
+                const overlay = document.getElementById('loading-overlay');
+                overlay.style.opacity = '0';
+                setTimeout(() => overlay.style.display = 'none', 500); // aguarda a transição de meio segundo
+                
             } catch (erro) {
-                document.getElementById("resultado").innerText = "Erro ao carregar a planilha. Verifique a internet.";
+                console.error("Erro na API:", erro);
+                // Se der erro de internet ou de API, a gente avisa na própria tela de loading pra não travar no escuro
+                const overlay = document.getElementById('loading-overlay');
+                overlay.innerHTML = `
+                    <h2 style="color: #e74c3c;">Falha na Conexão</h2>
+                    <p style="color: var(--text-sec); margin-top: 10px;">Não foi possível carregar o banco de dados. Tente recarregar a página.</p>
+                `;
             }
         }
 
-        // Algoritmo Fisher-Yates (Embaralhamento real e à prova de falhas)
-        function embaralhar(array) {
-            let m = array.length, t, i;
-            while (m) {
-                i = Math.floor(Math.random() * m--);
-                t = array[m];
-                array[m] = array[i];
-                array[i] = t;
-            }
-            return array;
+        function obterGolpesPorModalidade(modalidadeSelecionada) {
+            return dicGolpes.filter(g => {
+                if (modalidadeSelecionada === "Boxe") return g.boxe.toLowerCase() === "sim";
+                if (modalidadeSelecionada === "Muay Thai") return g.muayThai.toLowerCase() === "sim";
+                if (modalidadeSelecionada === "Kickboxing") return g.kickboxing.toLowerCase() === "sim";
+                return false;
+            }).map(g => g.nome);
         }
 
-        function sortearSequencia() {
-            const modSelecionada = document.getElementById("modalidade").value;
-            const difSelecionada = document.getElementById("dificuldade").value;
-            const qtd = parseInt(document.getElementById("qtdSequencias").value);
+        function atualizarListasSuspensas() {
+            document.getElementById("container-golpes").innerHTML = "";
+            adicionarCaixaGolpe(); 
+        }
+
+        function adicionarCaixaGolpe() {
+            const container = document.getElementById("container-golpes");
+            const totalAtuais = container.querySelectorAll(".linha-golpe").length;
+
+            if (totalAtuais >= maxGolpes) return mostrarToast("Atingiu o limite de 15 golpes!", true);
+
+            const modalidadeAtual = document.getElementById("novoMod").value;
+            const golpesValidos = obterGolpesPorModalidade(modalidadeAtual);
             
-            const divResultado = document.getElementById("resultado");
-            divResultado.innerHTML = "";
+            golpesValidos.sort((a, b) => a.localeCompare(b));
+
+            const div = document.createElement("div");
+            div.className = "linha-golpe";
             
-            // 1. Filtra a base original de acordo com os selects
-            let filtrados = baseDeDados;
-            if (modSelecionada !== "Todos") {
-                filtrados = filtrados.filter(item => item.tipo === modSelecionada);
-            }
-            if (difSelecionada !== "Todas") {
-                filtrados = filtrados.filter(item => item.dificuldade === difSelecionada);
+            const select = document.createElement("select");
+            select.className = "select-golpe";
+            select.innerHTML = `<option value="">-- Escolha --</option>`;
+            
+            golpesValidos.forEach(golpe => {
+                select.innerHTML += `<option value="${golpe}">${golpe}</option>`;
+            });
+
+            div.appendChild(select);
+
+            if (totalAtuais > 0) {
+                const btnRemover = document.createElement("button");
+                btnRemover.className = "btn-remover";
+                btnRemover.innerText = "×";
+                btnRemover.onclick = () => div.remove();
+                div.appendChild(btnRemover);
             }
 
-            // 2. Remove duplicatas exatas que possam ter sido cadastradas na planilha
-            let listaUnica = [];
-            let controleUnico = new Set();
-            for (let item of filtrados) {
-                if (!controleUnico.has(item.sequencia)) {
-                    controleUnico.add(item.sequencia);
-                    listaUnica.push(item);
-                }
-            }
+            container.appendChild(div);
+        }
 
-            if (listaUnica.length === 0) {
-                divResultado.innerText = "Nenhuma sequência encontrada na planilha com esses filtros.";
+        function abrirModalGolpe() { document.getElementById('modalGolpe').style.display = 'flex'; }
+        function fecharModalGolpe() { 
+            document.getElementById('modalGolpe').style.display = 'none'; 
+            document.getElementById('nomeNovoGolpe').value = "";
+        }
+
+        function salvarNovoGolpe() {
+            const nome = document.getElementById('nomeNovoGolpe').value.trim();
+            const btn = document.getElementById('btnSalvarGolpe');
+            
+            if (nome === "") return mostrarToast("Escreve o nome do golpe, mermão!", true);
+
+            const isDuplicata = dicGolpes.some(g => g.nome.toLowerCase() === nome.toLowerCase());
+            if (isDuplicata) return mostrarToast("Esse golpe já tá cadastrado!", true);
+
+            const MT = document.getElementById('checkMT').checked ? "Sim" : "Não";
+            const KB = document.getElementById('checkKB').checked ? "Sim" : "Não";
+            const BOXE = document.getElementById('checkBoxe').checked ? "Sim" : "Não";
+
+            if (MT === "Não" && KB === "Não" && BOXE === "Não") return mostrarToast("Selecione pelo menos uma modalidade!", true);
+
+            btn.disabled = true;
+            btn.innerText = "Salvando...";
+
+            const pacoteGolpe = {
+                acao: "salvar_golpe",
+                nome: nome,
+                golpe: nome,
+                muayThai: MT,
+                kickboxing: KB,
+                boxe: BOXE
+            };
+
+            fetch(URL_API, {
+                method: 'POST', mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(pacoteGolpe)
+            }).then(() => {
+                mostrarToast("🥋 Golpe adicionado ao Dicionário!");
+                fecharModalGolpe();
+                dicGolpes.push(pacoteGolpe);
+                atualizarListasSuspensas();
+            }).catch(() => mostrarToast("Erro na conexão.", true))
+              .finally(() => { btn.disabled = false; btn.innerText = "Salvar no Dicionário"; });
+        }
+
+        function salvarSequencia() {
+            const mod = document.getElementById("novoMod").value;
+            const dif = document.getElementById("novoDif").value;
+            const btn = document.getElementById("btnSalvar");
+
+            const selects = document.querySelectorAll(".select-golpe");
+            let golpesEscolhidos = [];
+            
+            selects.forEach(sel => {
+                if (sel.value !== "") golpesEscolhidos.push(sel.value);
+            });
+
+            if(golpesEscolhidos.length === 0) return mostrarToast("Selecione pelo menos um golpe!", true);
+
+            const seqFormatada = golpesEscolhidos.join(" - ");
+
+            const isDuplicata = baseSequencias.some(item => 
+                item.tipo === mod && item.dificuldade === dif && item.sequencia.toLowerCase() === seqFormatada.toLowerCase()
+            );
+
+            if (isDuplicata) return mostrarToast("Essa sequência já existe no banco!", true);
+
+            btn.disabled = true;
+            btn.innerText = "Gravando...";
+
+            const pacoteSeq = { acao: "salvar_sequencia", tipo: mod, dificuldade: dif, sequencia: seqFormatada };
+
+            fetch(URL_API, {
+                method: 'POST', mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(pacoteSeq)
+            }).then(() => {
+                mostrarToast("✅ Sequência salva com sucesso!");
+                atualizarListasSuspensas();
+                baseSequencias.push(pacoteSeq); 
+                renderizarLista();
+            }).catch(() => mostrarToast("Erro na conexão.", true))
+              .finally(() => { btn.disabled = false; btn.innerText = "Salvar Sequência"; });
+        }
+
+        function renderizarLista() {
+            const busca = document.getElementById('buscaTexto').value.toLowerCase().trim();
+            const mod = document.getElementById('filtroBancoMod').value;
+            const dif = document.getElementById('filtroBancoDif').value;
+            const container = document.getElementById('lista-banco');
+
+            if (baseSequencias.length === 0) {
+                container.innerHTML = "<p style='text-align:center;'>Banco de dados vazio.</p>";
                 return;
             }
 
-            // 3. Verifica o que ainda NÃO foi sorteado neste treino
-            let opcoesIneditas = listaUnica.filter(item => !historicoSorteios.has(item.sequencia));
+            const filtrados = baseSequencias.filter(item => {
+                const matchBusca = item.sequencia.toLowerCase().includes(busca);
+                const matchMod = mod === "Todos" || item.tipo === mod;
+                const matchDif = dif === "Todas" || item.dificuldade === dif;
+                return matchBusca && matchMod && matchDif;
+            });
 
-            // Se as opções inéditas não forem suficientes para preencher o que o usuário pediu
-            if (opcoesIneditas.length < qtd) {
-                historicoSorteios.clear(); // Zera a memória
-                opcoesIneditas = listaUnica; // Recomeça usando todas as opções únicas do filtro
-                
-                const aviso = document.createElement("div");
-                aviso.className = "aviso";
-                aviso.innerHTML = "🔄 <b>Lista renovada!</b><br>Você já treinou todas as sequências diferentes desse filtro. O histórico foi zerado e os golpes recomeçaram.";
-                divResultado.appendChild(aviso);
+            if (filtrados.length === 0) {
+                container.innerHTML = "<p style='text-align:center;'>Nenhuma sequência encontrada.</p>";
+                return;
             }
 
-            // 4. Embaralha de forma segura
-            const embaralhados = embaralhar([...opcoesIneditas]);
-
-            // 5. Separa a quantidade exata para exibir
-            const sequenciasDesteRound = embaralhados.slice(0, qtd);
-            
-            // 6. Exibe na tela e salva na memória
-            for (let i = 0; i < sequenciasDesteRound.length; i++) {
-                const item = sequenciasDesteRound[i];
-                
-                // Adiciona na memória para não sair no próximo round
-                historicoSorteios.add(item.sequencia);
-
-                const divItem = document.createElement("div");
-                divItem.className = "item-sequencia";
-                
-                let tag = "";
-                if (modSelecionada === "Todos") {
-                    tag = `<span class="tag-modalidade">${item.tipo} - ${item.dificuldade}</span>`;
-                }
-
-                divItem.innerHTML = `${tag}${i + 1}. ${item.sequencia}`;
-                divResultado.appendChild(divItem);
-            }
+            container.innerHTML = `<p style="font-size: 12px; color: #A8A8B3; text-align: right; margin-bottom: 10px;">${filtrados.length} sequências</p>`;
+            filtrados.reverse().forEach(item => {
+                container.innerHTML += `
+                    <div class="item-sequencia">
+                        <span class="tag-modalidade">${item.tipo} - ${item.dificuldade}</span>${item.sequencia}
+                    </div>`;
+            });
+            filtrados.reverse();
         }
 
-        carregarPlanilha();
-    </script>
+        function sortear() {
+            const mod = document.getElementById("filtroMod").value;
+            const dif = document.getElementById("filtroDif").value;
+            const qtd = parseInt(document.getElementById("qtdSeq").value);
+            const divRes = document.getElementById("resultado");
+            
+            let filtrados = baseSequencias;
+            if (mod !== "Todos") filtrados = filtrados.filter(i => i.tipo === mod);
+            if (dif !== "Todas") filtrados = filtrados.filter(i => i.dificuldade === dif);
 
+            let listaUnica = Array.from(new Set(filtrados.map(a => a.sequencia))).map(seq => filtrados.find(a => a.sequencia === seq));
+
+            if (listaUnica.length === 0) {
+                divRes.innerHTML = "<p style='text-align:center; color:#A8A8B3;'>Nenhuma sequência cadastrada nesse filtro.</p>";
+                return;
+            }
+
+            let ineditas = listaUnica.filter(i => !historico.has(i.sequencia));
+            if (ineditas.length < qtd) { historico.clear(); ineditas = listaUnica; }
+
+            const embaralhados = ineditas.sort(() => Math.random() - 0.5).slice(0, qtd);
+            
+            divRes.innerHTML = "";
+            embaralhados.forEach((item, index) => {
+                historico.add(item.sequencia);
+                divRes.innerHTML += `<div class="item-sequencia">${mod === "Todos" ? `<span class="tag-modalidade">${item.tipo} - ${item.dificuldade}</span>` : ""}${index + 1}. ${item.sequencia}</div>`;
+            });
+        }
+
+        function mostrarToast(mensagem, isErro = false) {
+            const t = document.getElementById("toast");
+            t.innerText = mensagem; t.className = isErro ? "show erro" : "show";
+            setTimeout(() => t.className = t.className.replace(/show|erro/g, ""), 3000);
+        }
+
+        // Aciona a busca dos dados assim que a página é lida pelo navegador
+        carregarDados();
+    </script>
 </body>
 </html>
