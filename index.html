@@ -4,320 +4,203 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>TreinoApp</title>
-    
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#E11D48">
     <link rel="apple-touch-icon" href="luvas.png">
-
     <style>
         :root {
-            --bg-color: #121214;
-            --card-bg: #202024;
-            --primary: #E11D48;
-            --primary-hover: #BE123C;
-            --text-main: #E1E1E6;
-            --text-sec: #A8A8B3;
-            --nav-bg: #18181B;
-            --modal-bg: rgba(0, 0, 0, 0.85);
+            --bg-color: #121214; --card-bg: #202024; --primary: #E11D48;
+            --text-main: #E1E1E6; --text-sec: #A8A8B3; --nav-bg: #18181B;
         }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
-        
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
         body { background-color: var(--bg-color); color: var(--text-main); padding-bottom: 80px; }
 
-        /* TELA DE LOADING GLOBAL */
         #loading-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: var(--bg-color); z-index: 9999;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            transition: opacity 0.5s ease;
         }
-        .spinner {
-            width: 60px; height: 60px; border: 6px solid #323238;
-            border-top-color: var(--primary); border-radius: 50%;
-            animation: spin 1s linear infinite; margin-bottom: 20px;
-        }
+        .spinner { width: 50px; height: 50px; border: 5px solid #323238; border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .header { 
-            background-color: var(--card-bg); 
-            padding: 15px 20px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            gap: 12px;
-            border-bottom: 1px solid #323238; 
-        }
-        .header h1 { font-size: 1.5rem; color: var(--primary); margin: 0; }
-        .logo-app { width: 40px; height: auto; }
+        .header { background-color: var(--card-bg); padding: 15px; display: flex; align-items: center; justify-content: center; gap: 12px; border-bottom: 1px solid #323238; }
+        .logo-app { width: 35px; height: auto; }
+        .header h1 { font-size: 1.3rem; color: var(--primary); }
 
         .tab-content { display: none; padding: 20px; max-width: 500px; margin: 0 auto; }
         .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; } }
 
         .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-size: 0.9rem; color: var(--text-sec); font-weight: 600; text-transform: uppercase; }
+        label { display: block; margin-bottom: 5px; font-size: 0.8rem; color: var(--text-sec); font-weight: 600; text-transform: uppercase; }
+        select, input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #323238; background: #121214; color: white; outline: none; }
         
-        select, input[type="text"], input[type="number"] {
-            width: 100%; padding: 14px; border-radius: 8px; border: 1px solid #323238;
-            background-color: #121214; color: var(--text-main); font-size: 1rem; outline: none;
-        }
-        select:focus, input:focus { border-color: var(--primary); }
-
-        button.btn-main {
-            width: 100%; padding: 15px; background-color: var(--primary); color: white;
-            border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold;
-            cursor: pointer; transition: 0.2s; margin-top: 10px;
-        }
-        button.btn-main:hover { background-color: var(--primary-hover); }
-
-        .linha-golpe { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
-        .linha-golpe select { flex: 1; }
-        .btn-remover {
-            background-color: #323238; color: var(--text-sec); border: none; 
-            border-radius: 8px; width: 45px; height: 45px; font-size: 1.2rem; cursor: pointer;
-        }
+        button.btn-main { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
         
-        .botoes-acao { display: flex; gap: 10px; margin-bottom: 20px; }
-        .botoes-acao button { flex: 1; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; border: none; }
-        .btn-add-golpe { background-color: transparent; color: var(--primary); border: 2px dashed #323238 !important; }
-        .btn-novo-banco { background-color: #323238; color: white; }
+        .item-sequencia { background: var(--card-bg); padding: 15px; margin-bottom: 12px; border-radius: 8px; border-left: 4px solid var(--primary); display: flex; justify-content: space-between; align-items: center; }
+        .tag-modalidade { font-size: 0.7rem; color: var(--text-sec); display: block; margin-bottom: 4px; }
+        .btn-delete { background: transparent; border: none; color: #ff4757; font-size: 1.2rem; cursor: pointer; padding: 5px; }
 
-        #resultado { margin-top: 25px; }
-        .item-sequencia {
-            background-color: var(--card-bg); padding: 15px; margin-bottom: 12px;
-            border-radius: 8px; border-left: 4px solid var(--primary); font-size: 1.1rem; line-height: 1.5;
-        }
-        .tag-modalidade { font-size: 0.75rem; color: var(--text-sec); display: block; margin-bottom: 5px; text-transform: uppercase; }
-
-        .bottom-nav {
-            position: fixed; bottom: 0; width: 100%; background-color: var(--nav-bg);
-            display: flex; justify-content: space-around; border-top: 1px solid #323238; padding: 10px 0; z-index: 100;
-        }
-        .nav-item {
-            color: var(--text-sec); text-align: center; font-size: 0.8rem;
-            display: flex; flex-direction: column; align-items: center; cursor: pointer; flex: 1;
-        }
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; background: var(--nav-bg); display: flex; border-top: 1px solid #323238; z-index: 100; }
+        .nav-item { color: var(--text-sec); text-align: center; font-size: 0.75rem; flex: 1; padding: 12px 0; cursor: pointer; display: flex; flex-direction: column; align-items: center; }
         .nav-item.active { color: var(--primary); }
-        .nav-icon { font-size: 1.4rem; margin-bottom: 3px; }
+        .nav-icon { font-size: 1.3rem; margin-bottom: 2px; }
 
-        .modal {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--modal-bg); z-index: 200; justify-content: center; align-items: center; padding: 20px;
-        }
-        .modal-content { background: var(--card-bg); padding: 25px; border-radius: 12px; width: 100%; max-width: 400px; }
-        .checkbox-group { display: flex; justify-content: space-between; margin-bottom: 20px; margin-top: 10px;}
-        .checkbox-item { display: flex; flex-direction: column; align-items: center; font-size: 0.85rem; gap: 5px;}
-
-        #toast {
-            visibility: hidden; min-width: 250px; background-color: #047857; color: #fff;
-            text-align: center; border-radius: 8px; padding: 16px; position: fixed;
-            z-index: 1000; left: 50%; transform: translateX(-50%); bottom: 90px; font-weight: bold;
-        }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 200; justify-content: center; align-items: center; padding: 20px; }
+        .modal-content { background: var(--card-bg); padding: 20px; border-radius: 12px; width: 100%; }
+        
+        #toast { visibility: hidden; position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: #047857; color: white; padding: 12px 20px; border-radius: 8px; font-weight: bold; z-index: 1000; }
         #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
-        #toast.erro { background-color: #e74c3c; }
         @keyframes fadein { from { bottom: 0; opacity: 0; } to { bottom: 90px; opacity: 1; } }
         @keyframes fadeout { from { bottom: 90px; opacity: 1; } to { bottom: 0; opacity: 0; } }
     </style>
 </head>
 <body>
 
-    <div id="loading-overlay">
-        <div class="spinner"></div>
-        <h2 style="color: var(--primary); font-size: 1.5rem;">Aquecendo...</h2>
-        <p style="color: var(--text-sec); margin-top: 10px; font-size: 0.9rem;">Buscando dados no tatame virtual</p>
-    </div>
+    <div id="loading-overlay"><div class="spinner"></div><p style="margin-top:15px; color:var(--text-sec)">Carregando tatame...</p></div>
 
-    <div class="header">
-        <img src="luvas.png" alt="Logo" class="logo-app">
-        <h1>TreinoApp</h1>
-    </div>
+    <div class="header"><img src="luvas.png" class="logo-app"><h1>TreinoApp</h1></div>
 
     <div id="tela-gerador" class="tab-content active">
-        <div class="form-group">
-            <label>Modalidade</label>
-            <select id="filtroMod">
-                <option value="Todos">Todas as Modalidades</option>
-                <option value="Boxe">Boxe</option>
-                <option value="Muay Thai">Muay Thai</option>
-                <option value="Kickboxing">Kickboxing</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Dificuldade</label>
-            <select id="filtroDif">
-                <option value="Todas">Todas as Dificuldades</option>
-                <option value="Fácil">Fácil</option>
-                <option value="Médio">Médio</option>
-                <option value="Difícil">Difícil</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Rounds (Qtd. Sequências)</label>
-            <input type="number" id="qtdSeq" value="4" min="1" max="20">
-        </div>
+        <div class="form-group"><label>Modalidade</label><select id="filtroMod"><option value="Todos">Todas</option><option value="Boxe">Boxe</option><option value="Muay Thai">Muay Thai</option><option value="Kickboxing">Kickboxing</option></select></div>
+        <div class="form-group"><label>Dificuldade</label><select id="filtroDif"><option value="Todas">Todas</option><option value="Fácil">Fácil</option><option value="Médio">Médio</option><option value="Difícil">Difícil</option></select></div>
+        <div class="form-group"><label>Rounds</label><input type="number" id="qtdSeq" value="4"></div>
         <button class="btn-main" onclick="sortear()">Iniciar Treino</button>
         <div id="resultado"></div>
     </div>
 
     <div id="tela-cadastro" class="tab-content">
-        <div class="form-group">
-            <label>Modalidade</label>
-            <select id="novoMod" onchange="atualizarListasSuspensas()">
-                <option value="Boxe">Boxe</option>
-                <option value="Muay Thai" selected>Muay Thai</option>
-                <option value="Kickboxing">Kickboxing</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Dificuldade</label>
-            <select id="novoDif">
-                <option value="Fácil">Fácil</option>
-                <option value="Médio">Médio</option>
-                <option value="Difícil">Difícil</option>
-            </select>
-        </div>
-        <label>Monte a Sequência</label>
+        <div class="form-group"><label>Modalidade</label><select id="novoMod" onchange="atualizarListas()"><option value="Boxe">Boxe</option><option value="Muay Thai" selected>Muay Thai</option><option value="Kickboxing">Kickboxing</option></select></div>
+        <div class="form-group"><label>Dificuldade</label><select id="novoDif"><option value="Fácil">Fácil</option><option value="Médio">Médio</option><option value="Difícil">Difícil</option></select></div>
         <div id="container-golpes"></div>
-        <div class="botoes-acao">
-            <button class="btn-add-golpe" onclick="adicionarCaixaGolpe()">+ Inserir Golpe</button>
-            <button class="btn-novo-banco" onclick="abrirModalGolpe()">⭐ Novo Dicionário</button>
-        </div>
-        <button class="btn-main" id="btnSalvar" onclick="salvarSequencia()">Salvar Sequência</button>
+        <button onclick="addGolpe()" style="background:transparent; color:var(--primary); border:1px dashed var(--primary); width:100%; padding:10px; border-radius:8px; margin-bottom:10px">+ Golpe</button>
+        <button onclick="document.getElementById('modalGolpe').style.display='flex'" style="background:#323238; color:white; border:none; width:100%; padding:10px; border-radius:8px; margin-bottom:10px">⭐ Novo Dicionário</button>
+        <button class="btn-main" id="btnSalvar" onclick="salvarSeq()">Salvar Sequência</button>
     </div>
 
     <div id="tela-banco" class="tab-content">
         <div class="form-group"><input type="text" id="buscaTexto" placeholder="Buscar sequência..." onkeyup="renderizarLista()"></div>
         <div id="lista-banco"></div>
+        <hr style="border:0; border-top:1px solid #323238; margin:20px 0">
+        <h3 style="margin-bottom:10px; font-size:1rem; color:var(--primary)">Gerenciar Dicionário</h3>
+        <div id="lista-golpes-dic"></div>
     </div>
 
-    <div id="modalGolpe" class="modal">
-        <div class="modal-content">
-            <h2>Cadastrar Novo Golpe</h2>
-            <input type="text" id="nomeNovoGolpe" placeholder="Ex: Superman Punch" style="margin-bottom:15px">
-            <div class="checkbox-group">
-                <label class="checkbox-item"><input type="checkbox" id="checkBoxe" checked> Boxe</label>
-                <label class="checkbox-item"><input type="checkbox" id="checkMT" checked> Muay Thai</label>
-                <label class="checkbox-item"><input type="checkbox" id="checkKB" checked> Kickboxing</label>
-            </div>
-            <button class="btn-main" id="btnSalvarGolpe" onclick="salvarNovoGolpe()">Salvar</button>
-            <button class="btn-main btn-fechar" onclick="fecharModalGolpe()" style="background:#323238">Cancelar</button>
+    <div id="modalGolpe" class="modal"><div class="modal-content">
+        <h2 style="color:var(--primary); margin-bottom:15px">Novo Golpe</h2>
+        <input type="text" id="nomeNovoGolpe" placeholder="Ex: Superman Punch" style="margin-bottom:15px">
+        <div style="display:flex; justify-content:space-between; margin-bottom:20px">
+            <label style="font-size:0.7rem"><input type="checkbox" id="checkB" checked> Boxe</label>
+            <label style="font-size:0.7rem"><input type="checkbox" id="checkM" checked> Muay Thai</label>
+            <label style="font-size:0.7rem"><input type="checkbox" id="checkK" checked> Kickboxing</label>
         </div>
-    </div>
+        <button class="btn-main" onclick="salvarNovoGolpe()">Salvar</button>
+        <button onclick="document.getElementById('modalGolpe').style.display='none'" style="background:transparent; color:var(--text-sec); border:none; width:100%; margin-top:10px">Cancelar</button>
+    </div></div>
 
     <div class="bottom-nav">
-        <div class="nav-item active" onclick="mudarTela('tela-gerador', this)"><span class="nav-icon">⚡</span><span>Treinar</span></div>
+        <div class="nav-item active" onclick="mudarTela('tela-gerador', this)"><span class="nav-icon">🥋</span><span>Treinar</span></div>
         <div class="nav-item" onclick="mudarTela('tela-cadastro', this)"><span class="nav-icon">➕</span><span>Adicionar</span></div>
-        <div class="nav-item" onclick="mudarTela('tela-banco', this)"><span class="nav-icon">📋</span><span>Banco</span></div>
+        <div class="nav-item" onclick="mudarTela('tela-banco', this)"><span class="nav-icon">📋</span><span>Sequências</span></div>
     </div>
 
     <div id="toast"></div>
 
     <script>
         const URL_API = "https://script.google.com/macros/s/AKfycbzMNVyrvnwPFmkW7HnrfdjSZf3HYeI6IClvQj7yVYzEUzSmatG7KzekjOx2W5TOwL1H5Q/exec";
-        let baseSequencias = []; let dicGolpes = []; let historico = new Set(); let maxGolpes = 15;
+        let baseSeq = []; let dicG = []; let historico = new Set();
 
-        async function carregarDados() {
+        async function carregar() {
             try {
-                const resposta = await fetch(URL_API);
-                const dadosJson = await resposta.json();
-                baseSequencias = dadosJson.sequencias || [];
-                dicGolpes = dadosJson.golpes || [];
-                renderizarLista(); atualizarListasSuspensas();
-                const overlay = document.getElementById('loading-overlay');
-                overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 500);
-            } catch (erro) { console.error(erro); }
+                const res = await fetch(URL_API); const data = await res.json();
+                baseSeq = data.sequencias || []; dicG = data.golpes || [];
+                renderizarLista(); atualizarListas();
+                document.getElementById('loading-overlay').style.display = 'none';
+            } catch (e) { console.error(e); }
         }
 
-        function mudarTela(idTela, elemento) {
+        function mudarTela(id, el) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById(idTela).classList.add('active'); elemento.classList.add('active');
-            if(idTela === 'tela-banco') renderizarLista();
+            document.getElementById(id).classList.add('active'); el.classList.add('active');
         }
 
-        function obterGolpesPorModalidade(mod) {
-            return dicGolpes.filter(g => {
-                if (mod === "Boxe") return g.boxe.toLowerCase() === "sim";
-                if (mod === "Muay Thai") return g.muayThai.toLowerCase() === "sim";
-                if (mod === "Kickboxing") return g.kickboxing.toLowerCase() === "sim";
-                return false;
-            }).map(g => g.nome);
-        }
-
-        function adicionarCaixaGolpe() {
-            const container = document.getElementById("container-golpes");
-            const total = container.querySelectorAll(".linha-golpe").length;
-            if (total >= maxGolpes) return;
+        function addGolpe() {
             const mod = document.getElementById("novoMod").value;
-            const golpes = obterGolpesPorModalidade(mod).sort();
-            const div = document.createElement("div"); div.className = "linha-golpe";
-            const select = document.createElement("select"); select.className = "select-golpe";
-            select.innerHTML = `<option value="">-- Escolha --</option>` + golpes.map(g => `<option value="${g}">${g}</option>`).join('');
-            div.appendChild(select);
-            if (total > 0) {
-                const btn = document.createElement("button"); btn.className = "btn-remover"; btn.innerText = "×";
-                btn.onclick = () => div.remove(); div.appendChild(btn);
-            }
+            const validos = dicG.filter(g => {
+                if(mod === "Boxe") return g.boxe.toLowerCase() === "sim";
+                if(mod === "Muay Thai") return g.muayThai.toLowerCase() === "sim";
+                return g.kickboxing.toLowerCase() === "sim";
+            }).map(g => g.nome).sort();
+            const container = document.getElementById("container-golpes");
+            const div = document.createElement("div"); div.className = "form-group";
+            div.innerHTML = `<select class="select-golpe"><option value="">-- Golpe --</option>${validos.map(v => `<option value="${v}">${v}</option>`).join('')}</select>`;
             container.appendChild(div);
         }
 
-        function atualizarListasSuspensas() { document.getElementById("container-golpes").innerHTML = ""; adicionarCaixaGolpe(); }
-        function abrirModalGolpe() { document.getElementById('modalGolpe').style.display = 'flex'; }
-        function fecharModalGolpe() { document.getElementById('modalGolpe').style.display = 'none'; }
+        function atualizarListas() { document.getElementById("container-golpes").innerHTML = ""; addGolpe(); }
 
-        function salvarNovoGolpe() {
-            const nome = document.getElementById('nomeNovoGolpe').value.trim();
-            if (!nome) return;
-            const pacote = { acao: "salvar_golpe", nome: nome, golpe: nome, 
-                muayThai: document.getElementById('checkMT').checked ? "Sim" : "Não",
-                kickboxing: document.getElementById('checkKB').checked ? "Sim" : "Não",
-                boxe: document.getElementById('checkBoxe').checked ? "Sim" : "Não"
-            };
-            fetch(URL_API, { method: 'POST', mode: 'no-cors', body: JSON.stringify(pacote) }).then(() => {
-                mostrarToast("🥋 Golpe salvo!"); fecharModalGolpe(); dicGolpes.push(pacote); atualizarListasSuspensas();
-            });
-        }
-
-        function salvarSequencia() {
+        function salvarSeq() {
             const mod = document.getElementById("novoMod").value; const dif = document.getElementById("novoDif").value;
             const golpes = Array.from(document.querySelectorAll(".select-golpe")).map(s => s.value).filter(v => v !== "");
-            if (golpes.length === 0) return;
+            if(!golpes.length) return;
             const seq = golpes.join(" - ");
-            const pacote = { acao: "salvar_sequencia", tipo: mod, dificuldade: dif, sequencia: seq };
-            fetch(URL_API, { method: 'POST', mode: 'no-cors', body: JSON.stringify(pacote) }).then(() => {
-                mostrarToast("✅ Sequência salva!"); atualizarListasSuspensas(); baseSequencias.push(pacote);
-            });
+            const btn = document.getElementById("btnSalvar"); btn.disabled = true;
+            fetch(URL_API, { method: 'POST', body: JSON.stringify({ acao: "salvar_sequencia", tipo: mod, dificuldade: dif, sequencia: seq }) })
+                .then(() => { msg("✅ Salvo!"); carregar(); btn.disabled = false; });
+        }
+
+        function excluirSeq(tipo, dif, seq) {
+            if(!confirm("Apagar essa sequência?")) return;
+            fetch(URL_API, { method: 'POST', body: JSON.stringify({ acao: "excluir_sequencia", tipo, dificuldade: dif, sequencia: seq }) })
+                .then(() => { msg("🗑️ Removido!"); carregar(); });
+        }
+
+        function excluirGolpe(nome) {
+            if(!confirm(`Apagar o golpe "${nome}" do dicionário?`)) return;
+            fetch(URL_API, { method: 'POST', body: JSON.stringify({ acao: "excluir_golpe", nome }) })
+                .then(() => { msg("🗑️ Golpe removido!"); carregar(); });
+        }
+
+        function salvarNovoGolpe() {
+            const nome = document.getElementById("nomeNovoGolpe").value.trim();
+            if(!nome) return;
+            const dados = { acao: "salvar_golpe", golpe: nome, muayThai: document.getElementById("checkM").checked ? "Sim" : "Não", kickboxing: document.getElementById("checkK").checked ? "Sim" : "Não", boxe: document.getElementById("checkB").checked ? "Sim" : "Não" };
+            fetch(URL_API, { method: 'POST', body: JSON.stringify(dados) }).then(() => { msg("🥋 Golpe Adicionado!"); document.getElementById("modalGolpe").style.display='none'; carregar(); });
+        }
+
+        function renderizarLista() {
+            const busca = document.getElementById('buscaTexto').value.toLowerCase();
+            const filtrados = baseSeq.filter(i => i.sequencia.toLowerCase().includes(busca));
+            document.getElementById("lista-banco").innerHTML = filtrados.reverse().map(i => `
+                <div class="item-sequencia">
+                    <div><span class="tag-modalidade">${i.tipo} - ${i.dificuldade}</span>${i.sequencia}</div>
+                    <button class="btn-delete" onclick="excluirSeq('${i.tipo}', '${i.dificuldade}', '${i.sequencia}')">🗑️</button>
+                </div>`).join('');
+            
+            document.getElementById("lista-golpes-dic").innerHTML = dicG.map(g => `
+                <div style="background:#18181B; padding:10px; border-radius:8px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center">
+                    <span style="font-size:0.9rem">${g.nome}</span>
+                    <button class="btn-delete" onclick="excluirGolpe('${g.nome}')" style="font-size:1rem">🗑️</button>
+                </div>`).join('');
         }
 
         function sortear() {
             const mod = document.getElementById("filtroMod").value; const dif = document.getElementById("filtroDif").value;
             const qtd = parseInt(document.getElementById("qtdSeq").value);
-            let filtrados = baseSequencias.filter(i => (mod === "Todos" || i.tipo === mod) && (dif === "Todas" || i.dificuldade === dif));
-            if (filtrados.length === 0) return;
-            const sorteados = filtrados.sort(() => Math.random() - 0.5).slice(0, qtd);
-            document.getElementById("resultado").innerHTML = sorteados.map((s, i) => `<div class="item-sequencia">
-                ${mod === "Todos" ? `<span class="tag-modalidade">${s.tipo} - ${s.dificuldade}</span>` : ""}${i+1}. ${s.sequencia}</div>`).join('');
+            let lista = baseSeq.filter(i => (mod === "Todos" || i.tipo === mod) && (dif === "Todas" || i.dificuldade === dif));
+            if(!lista.length) return;
+            const sorteados = lista.sort(() => Math.random() - 0.5).slice(0, qtd);
+            document.getElementById("resultado").innerHTML = sorteados.map((s, i) => `
+                <div class="item-sequencia">
+                    <div><span class="tag-modalidade">${s.tipo} - ${s.dificuldade}</span>${i+1}. ${s.sequencia}</div>
+                </div>`).join('');
         }
 
-        function renderizarLista() {
-            const busca = document.getElementById('buscaTexto').value.toLowerCase();
-            const filtrados = baseSequencias.filter(i => i.sequencia.toLowerCase().includes(busca));
-            document.getElementById("lista-banco").innerHTML = filtrados.reverse().map(i => `<div class="item-sequencia">
-                <span class="tag-modalidade">${i.tipo} - ${i.dificuldade}</span>${i.sequencia}</div>`).join('');
-        }
+        function msg(m) { const t = document.getElementById("toast"); t.innerText = m; t.className = "show"; setTimeout(() => t.className = "", 3000); }
 
-        function mostrarToast(m) { const t = document.getElementById("toast"); t.innerText = m; t.className = "show"; setTimeout(() => t.className = "", 3000); }
-
-        // Registro do Service Worker para PWA
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').then(reg => console.log('SW OK')).catch(err => console.log('SW Erro', err));
-            });
-        }
-
-        carregarDados();
+        if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js'); }); }
+        carregar();
     </script>
 </body>
 </html>
