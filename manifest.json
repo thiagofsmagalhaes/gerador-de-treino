@@ -5,7 +5,7 @@
   "display": "standalone",
   "background_color": "#121214",
   "theme_color": "#E11D48",
-  "description": "Gerador de sequências de Boxe, Muay Thai e Kickboxing",
+  "description": "Gerador de sequências de luta",
   "icons": [
     {
       "src": "luvas.png",
